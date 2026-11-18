@@ -1,10 +1,25 @@
 import os
+import sys
 import time
 import json
 import threading
 import urllib.request
 import customtkinter as ctk
 from tkinter import filedialog
+
+# --- AUTO-LOAD NVIDIA CUDA 12 DLLs ON WINDOWS ---
+def register_nvidia_dlls():
+    if sys.platform == "win32":
+        for site_pkg in sys.path:
+            nvidia_dir = os.path.join(site_pkg, "nvidia")
+            if os.path.isdir(nvidia_dir):
+                for sub in ["cublas", "cudnn", "cuda_runtime"]:
+                    bin_path = os.path.join(nvidia_dir, sub, "bin")
+                    if os.path.isdir(bin_path):
+                        os.add_dll_directory(bin_path)
+                        os.environ["PATH"] = bin_path + os.pathsep + os.environ.get("PATH", "")
+
+register_nvidia_dlls()
 from faster_whisper import WhisperModel
 
 # Set up CustomTkinter appearance
@@ -222,7 +237,7 @@ class AutoCutStudioApp(ctk.CTk):
         hours = int(seconds // 3600)
         minutes = int((seconds % 3600) // 60)
         secs = int(seconds % 60)
-        milliseconds = int(int((seconds - int(seconds)) * 1000))
+        milliseconds = int((seconds - int(seconds)) * 1000)
         return f"{hours:02d}:{minutes:02d}:{secs:02d},{milliseconds:03d}"
 
     def run_pipeline_logic(self, file_path):
@@ -253,12 +268,10 @@ class AutoCutStudioApp(ctk.CTk):
                 self.log_verbose("WHISPER", f"Found existing transcript at {srt_output}. Skipping transcription.")
                 self.update_status("Skipped transcription (cached)...", 0.4)
             
-            segments_list = []
             if not skip_whisper:
                 self.update_status("Transcribing audio (Faster-Whisper CUDA)...", 0.2)
                 self.log_verbose("WHISPER", "Initializing large-v3 model on RTX CUDA device (float16)...")
                 
-                # Initialize Whisper model on CUDA with float16
                 model = WhisperModel("large-v3", device="cuda", compute_type="float16")
                 
                 if self.cancel_requested.is_set():
@@ -269,13 +282,11 @@ class AutoCutStudioApp(ctk.CTk):
                 
                 segments, info = model.transcribe(file_path, beam_size=5)
                 
-                # Collect segments and write out to SRT file
                 with open(srt_output, "w", encoding="utf-8") as f:
                     for i, segment in enumerate(segments, start=1):
                         if self.cancel_requested.is_set():
                             self.log_verbose("WHISPER", "Transcription aborted by user.")
                             return
-                        segments_list.append(segment)
                         start_str = self.format_time_srt(segment.start)
                         end_str = self.format_time_srt(segment.end)
                         f.write(f"{i}\n{start_str} --> {end_str}\n{segment.text.strip()}\n\n")
@@ -293,7 +304,6 @@ class AutoCutStudioApp(ctk.CTk):
             if self.cancel_requested.is_set():
                 return
 
-            # Load transcript text for LLM analysis
             transcript_text = ""
             if os.path.exists(srt_output):
                 with open(srt_output, "r", encoding="utf-8") as f:
@@ -301,7 +311,8 @@ class AutoCutStudioApp(ctk.CTk):
 
             prompt = (
                 f"Analyze the following video transcript and identify the best highlight clips "
-                f"suitable for {selected_framing}. Return timestamps and reasons.\n\nTranscript:\n{transcript_text}"
+                f"suitable for {selected_framing}. Return exact start/end timestamps, durations, and reasons.\n\n"
+                f"Transcript:\n{transcript_text}"
             )
 
             req_data = json.dumps({
@@ -317,13 +328,12 @@ class AutoCutStudioApp(ctk.CTk):
             )
 
             try:
-                with urllib.request.urlopen(req, timeout=120) as response:
+                with urllib.request.urlopen(req, timeout=180) as response:
                     res_body = json.loads(response.read().decode("utf-8"))
                     ai_response_text = res_body.get("response", "No response generated.")
             except Exception as api_err:
                 ai_response_text = f"Error contacting Ollama API: {str(api_err)}"
 
-            # Format and display in the AI Clips tab
             display_output = (
                 f"=== OLLAMA AI HIGHLIGHT ANALYSIS ===\n"
                 f"Model: qwen2.5:32b | Framing: {selected_framing}\n\n"
