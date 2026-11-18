@@ -30,9 +30,9 @@ class AutoCutStudioApp(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("Local AI Clip Studio — RTX Accelerated Pipeline")
-        self.geometry("880x850")
-        self.minsize(720, 640)
+        self.title("Local AI Video Clip Studio — RTX Accelerated Pipeline")
+        self.geometry("920x980")
+        self.minsize(760, 750)
 
         # Threading & Cancellation Control
         self.active_worker_thread = None
@@ -44,19 +44,19 @@ class AutoCutStudioApp(ctk.CTk):
         # --- UI LAYOUT SETUP ---
         
         # Title Label
-        self.title_label = ctk.CTkLabel(self, text="Insta360 Local AI Clipping Pipeline", font=("Arial", 16, "bold"))
+        self.title_label = ctk.CTkLabel(self, text="Universal Local AI Video Clip Studio (Insta360 & More)", font=("Arial", 16, "bold"))
         self.title_label.pack(pady=(15, 2))
 
         self.rtx_badge = ctk.CTkLabel(self, text="⚡ Powered by CUDA / RTX Hardware Acceleration", font=("Arial", 11, "italic"), text_color="#2ecc71")
         self.rtx_badge.pack(pady=(0, 10))
 
-        # 1. FILE SELECTION FRAME (Interactive File Picker)
+        # 1. FILE SELECTION FRAME (Interactive File Picker - Starts Clean)
         self.file_frame = ctk.CTkFrame(self)
         self.file_frame.pack(fill="x", padx=20, pady=5)
         
-        self.file_path_var = ctk.StringVar(value=r"C:/Video Temp/Insta360/Download/LRV_20260523_111251_01_001.insv")
+        self.file_path_var = ctk.StringVar(value="")
         
-        self.file_entry = ctk.CTkEntry(self.file_frame, textvariable=self.file_path_var, font=("Arial", 11))
+        self.file_entry = ctk.CTkEntry(self.file_frame, textvariable=self.file_path_var, placeholder_text="Select or drop a video file (.mp4, .mov, .mkv, .insv)...", font=("Arial", 11))
         self.file_entry.pack(side="left", fill="x", expand=True, padx=(10, 5), pady=10)
 
         self.browse_button = ctk.CTkButton(self.file_frame, text="Browse...", width=90, command=self.browse_file)
@@ -86,13 +86,13 @@ class AutoCutStudioApp(ctk.CTk):
         self.framing_mode_var = ctk.StringVar(value="Vertical (9:16 Shorts/TikTok)")
         self.framing_dropdown = ctk.CTkOptionMenu(
             self.options_frame, 
-            values=["Vertical (9:16 Shorts/TikTok)", "Full 360° Source"],
+            values=["Vertical (9:16 Shorts/TikTok)", "Full 360° Source", "Standard 16:9 Landscape"],
             variable=self.framing_mode_var,
             width=210
         )
         self.framing_dropdown.pack(side="left", padx=3, pady=8)
 
-        # Auto-detect button / trigger
+        # Auto-detect button
         self.autodetect_btn = ctk.CTkButton(self.options_frame, text="Auto-Detect", width=85, command=self.auto_detect_settings, fg_color="#34495e", hover_color="#2c3e50")
         self.autodetect_btn.pack(side="left", padx=5, pady=8)
 
@@ -105,7 +105,49 @@ class AutoCutStudioApp(ctk.CTk):
         )
         self.resume_checkbox.pack(side="right", padx=10, pady=8)
 
-        # 3. ACTION BUTTONS (Start & Abort)
+        # 3. CATEGORIZED AI CLIP MINING FOCUS TAGS
+        self.tags_main_frame = ctk.CTkFrame(self)
+        self.tags_main_frame.pack(fill="x", padx=20, pady=5)
+
+        self.tags_title = ctk.CTkLabel(self.tags_main_frame, text="AI Clip Mining Focus Categories & Hobbies", font=("Arial", 12, "bold"))
+        self.tags_title.pack(anchor="w", padx=12, pady=(8, 4))
+
+        # Categories mapping with grouped tags
+        self.hobby_categories = {
+            "🎮 Gaming & VR": ["Gaming / PC", "VR Horror & Action", "Multiplayer & Streams"],
+            "🏂 Action & Extreme": ["Snowboarding", "One-Wheeling", "Skating / Boarding", "Cycling & Trails"],
+            "🏕️ Outdoor & Water": ["Camping", "Boating & Water", "Hiking & Nature"],
+            "🚴 Lifestyle & Pets": ["Cycling / Commute", "Dog Training & Pets", "Casual Vlogging / Talk"]
+        }
+
+        self.hobby_vars = {}
+        
+        # Container for category columns/grid
+        self.categories_grid = ctk.CTkFrame(self.tags_main_frame, fg_color="transparent")
+        self.categories_grid.pack(fill="x", padx=8, pady=(0, 8))
+        self.categories_grid.grid_columnconfigure((0, 1), weight=1)
+
+        cat_col = 0
+        cat_row = 0
+        for category_name, items in self.hobby_categories.items():
+            cat_frame = ctk.CTkFrame(self.categories_grid, fg_color="#1e1e1e" if ctk.get_appearance_mode()=="Dark" else "#e6e6e6")
+            cat_frame.grid(row=cat_row, column=cat_col, sticky="nsew", padx=6, pady=6)
+            
+            cat_label = ctk.CTkLabel(cat_frame, text=category_name, font=("Arial", 11, "bold"))
+            cat_label.pack(anchor="w", padx=8, pady=(6, 2))
+
+            for item in items:
+                var = ctk.BooleanVar(value=False)
+                self.hobby_vars[item] = var
+                cb = ctk.CTkCheckBox(cat_frame, text=item, variable=var, font=("Arial", 10))
+                cb.pack(anchor="w", padx=12, pady=2)
+
+            cat_col += 1
+            if cat_col > 1:
+                cat_col = 0
+                cat_row += 1
+
+        # 4. ACTION BUTTONS (Start & Abort)
         self.btn_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.btn_frame.pack(fill="x", padx=20, pady=(5, 5))
 
@@ -120,10 +162,10 @@ class AutoCutStudioApp(ctk.CTk):
         self.progress_bar.pack(fill="x", padx=20, pady=(8, 2))
         self.progress_bar.set(0.0)
 
-        self.status_label = ctk.CTkLabel(self, text="Status: Idle", font=("Arial", 12, "bold"))
+        self.status_label = ctk.CTkLabel(self, text="Status: Ready. Please select a video file to begin.", font=("Arial", 12, "bold"))
         self.status_label.pack(anchor="w", padx=20, pady=(0, 5))
 
-        # 4. TABS FOR LOGS VS. DETECTED AI TIMELINE CLIPS
+        # 5. TABS FOR LOGS VS. DETECTED AI TIMELINE CLIPS
         self.tabview = ctk.CTkTabview(self)
         self.tabview.pack(fill="both", expand=True, padx=20, pady=(0, 15))
         
@@ -138,12 +180,10 @@ class AutoCutStudioApp(ctk.CTk):
         # Detected Clips Table/Textbox View
         self.clips_textbox = ctk.CTkTextbox(self.tab_clips, font=("Consolas", 11))
         self.clips_textbox.pack(fill="both", expand=True, padx=5, pady=5)
-        self.clips_textbox.insert("end", "No clips analyzed yet. Run the pipeline to view AI timestamps & durations.\n")
+        self.clips_textbox.insert("end", "No clips analyzed yet. Select a video and run the pipeline to view AI timestamps & durations.\n")
         self.clips_textbox.configure(state="disabled")
 
-        # Initial auto-detection
-        self.auto_detect_settings()
-        self.log_verbose("SYSTEM", "Application initialized. Ready for processing.")
+        self.log_verbose("SYSTEM", "Application initialized. Waiting for video file selection.")
 
     def browse_file(self):
         """Opens file dialog to select any target video file and auto-detects parameters."""
@@ -154,11 +194,13 @@ class AutoCutStudioApp(ctk.CTk):
         if filename:
             self.file_path_var.set(filename)
             self.auto_detect_settings()
-            self.log_verbose("SYSTEM", f"Target file changed to: {filename}")
+            self.log_verbose("SYSTEM", f"Target file selected: {filename}")
 
     def auto_detect_settings(self):
         """Smartly detects output formatting and framing based on file naming or path clues."""
         path = self.file_path_var.get().lower()
+        if not path:
+            return
         
         if ".insv" in path:
             self.output_format_var.set("fcpxml")
@@ -170,9 +212,12 @@ class AutoCutStudioApp(ctk.CTk):
         if "vertical" in path or "vert" in path or "reel" in path or "tiktok" in path:
             self.framing_mode_var.set("Vertical (9:16 Shorts/TikTok)")
             detected_frame = "Vertical (9:16 Shorts/TikTok)"
-        else:
+        elif "360" in path or ".insv" in path:
             self.framing_mode_var.set("Full 360° Source")
             detected_frame = "Full 360° Source"
+        else:
+            self.framing_mode_var.set("Standard 16:9 Landscape")
+            detected_frame = "Standard 16:9 Landscape"
 
         self.log_verbose("SYSTEM", f"Auto-detected -> Format: .{detected_fmt.lower()} | Framing: {detected_frame}")
 
@@ -213,7 +258,8 @@ class AutoCutStudioApp(ctk.CTk):
         """Spawns a background thread to prevent GUI freezing."""
         target_file_path = self.file_path_var.get().strip()
         if not target_file_path or not os.path.exists(target_file_path):
-            self.log_verbose("ERROR", f"Target file does not exist: {target_file_path}")
+            self.log_verbose("ERROR", f"Target file does not exist or none selected: {target_file_path}")
+            self.update_status("Error: Please select a valid video file first!")
             return
 
         self.start_button.configure(state="disabled")
@@ -246,6 +292,9 @@ class AutoCutStudioApp(ctk.CTk):
         selected_format = self.output_format_var.get()
         selected_framing = self.framing_mode_var.get()
         
+        active_hobbies = [hobby for hobby, var in self.hobby_vars.items() if var.get()]
+        hobbies_str = ", ".join(active_hobbies) if active_hobbies else "General Content"
+        
         srt_output = f"{base_name}.srt"
         final_output = f"{base_name}.{selected_format}"
         
@@ -254,7 +303,8 @@ class AutoCutStudioApp(ctk.CTk):
         try:
             self.update_status("Initializing pipeline...", 0.0)
             self.log_verbose("SYSTEM", f"Target file: {os.path.basename(file_path)}")
-            self.log_verbose("SYSTEM", f"Output Format: .{selected_format.upper()} | Framing: {selected_framing}")
+            self.log_verbose("SYSTEM", f"Format: .{selected_format.upper()} | Framing: {selected_framing}")
+            self.log_verbose("SYSTEM", f"Active Focus Tags: [{hobbies_str}]")
             self.log_verbose("SYSTEM", f"Resume Mode: {'ENABLED' if is_resume_enabled else 'DISABLED'}")
 
             if self.cancel_requested.is_set():
@@ -299,7 +349,7 @@ class AutoCutStudioApp(ctk.CTk):
 
             # --- STEP 2: OLLAMA LLM ANALYSIS ---
             self.update_status("Analyzing highlights (Ollama GPU)...", 0.6)
-            self.log_verbose("OLLAMA", "Connecting to local Ollama instance (qwen2.5:32b on CUDA)...")
+            self.log_verbose("OLLAMA", f"Connecting to local Ollama instance (qwen2.5:32b on CUDA) with focus: [{hobbies_str}]...")
             
             if self.cancel_requested.is_set():
                 return
@@ -310,8 +360,10 @@ class AutoCutStudioApp(ctk.CTk):
                     transcript_text = f.read()
 
             prompt = (
-                f"Analyze the following video transcript and identify the best highlight clips "
-                f"suitable for {selected_framing}. Return exact start/end timestamps, durations, and reasons.\n\n"
+                f"You are an expert video editor and clip miner. Analyze the following video transcript and identify the best "
+                f"highlight clips tailored for {selected_framing}. The user's active focus/activity categories for this session are: [{hobbies_str}]. "
+                f"Look specifically for engaging moments, tricks, commentary, action sequences, or milestones related to these themes. "
+                f"Return exact start/end timestamps, durations, and reasoning for each clip.\n\n"
                 f"Transcript:\n{transcript_text}"
             )
 
@@ -328,15 +380,17 @@ class AutoCutStudioApp(ctk.CTk):
             )
 
             try:
-                with urllib.request.urlopen(req, timeout=180) as response:
+                # 10-minute timeout for 32B model inference
+                with urllib.request.urlopen(req, timeout=600) as response:
                     res_body = json.loads(response.read().decode("utf-8"))
                     ai_response_text = res_body.get("response", "No response generated.")
             except Exception as api_err:
                 ai_response_text = f"Error contacting Ollama API: {str(api_err)}"
 
             display_output = (
-                f"=== OLLAMA AI HIGHLIGHT ANALYSIS ===\n"
-                f"Model: qwen2.5:32b | Framing: {selected_framing}\n\n"
+                f"=== OLLAMA AI CLIP MINING ANALYSIS ===\n"
+                f"Model: qwen2.5:32b | Framing: {selected_framing}\n"
+                f"Focus Categories: [{hobbies_str}]\n\n"
                 f"{ai_response_text}"
             )
             self.update_clips_display(display_output)
