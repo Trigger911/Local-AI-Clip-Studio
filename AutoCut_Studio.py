@@ -31,8 +31,8 @@ class AutoCutStudioApp(ctk.CTk):
         super().__init__()
 
         self.title("Universal Local AI Video Clip Studio — RTX Accelerated Pipeline")
-        self.geometry("980x1020")
-        self.minsize(820, 780)
+        self.geometry("1020x1120")
+        self.minsize(860, 820)
 
         # Threading & Cancellation Control
         self.active_worker_thread = None
@@ -62,40 +62,50 @@ class AutoCutStudioApp(ctk.CTk):
         self.browse_button = ctk.CTkButton(self.file_frame, text="Browse...", width=90, command=self.browse_file)
         self.browse_button.pack(side="right", padx=(0, 10), pady=8)
 
-        # 2. OPTIONS & FORMAT SELECTION FRAME
+        # 2. OPTIONS, FORMAT & LLM MODEL SELECTION FRAME
         self.options_frame = ctk.CTkFrame(self)
         self.options_frame.pack(fill="x", padx=20, pady=4)
 
         # Output format dropdown
         self.format_label = ctk.CTkLabel(self.options_frame, text="Format:", font=("Arial", 11, "bold"))
-        self.format_label.pack(side="left", padx=(10, 3), pady=8)
+        self.format_label.pack(side="left", padx=(8, 2), pady=8)
 
         self.output_format_var = ctk.StringVar(value="fcpxml")
         self.format_dropdown = ctk.CTkOptionMenu(
             self.options_frame, 
             values=["fcpxml", "edl", "srt", "txt"],
             variable=self.output_format_var,
-            width=90
+            width=85
         )
-        self.format_dropdown.pack(side="left", padx=3, pady=8)
+        self.format_dropdown.pack(side="left", padx=2, pady=8)
 
         # Aspect Ratio / Framing dropdown
         self.ratio_label = ctk.CTkLabel(self.options_frame, text="Framing:", font=("Arial", 11, "bold"))
-        self.ratio_label.pack(side="left", padx=(10, 3), pady=8)
+        self.ratio_label.pack(side="left", padx=(8, 2), pady=8)
 
         self.framing_mode_var = ctk.StringVar(value="Vertical (9:16 Shorts/TikTok)")
         self.framing_dropdown = ctk.CTkOptionMenu(
             self.options_frame, 
             values=["Vertical (9:16 Shorts/TikTok)", "Full 360° Source", "Standard 16:9 Landscape"],
             variable=self.framing_mode_var,
-            width=200
+            width=175
         )
-        self.framing_dropdown.pack(side="left", padx=3, pady=8)
+        self.framing_dropdown.pack(side="left", padx=2, pady=8)
 
-        # Auto-detect button
-        self.autodetect_btn = ctk.CTkButton(self.options_frame, text="Auto-Detect", width=85, command=self.auto_detect_settings, fg_color="#34495e", hover_color="#2c3e50")
-        self.autodetect_btn.pack(side="left", padx=5, pady=8)
+        # LLM Model Selector Dropdown
+        self.model_label = ctk.CTkLabel(self.options_frame, text="LLM:", font=("Arial", 11, "bold"))
+        self.model_label.pack(side="left", padx=(8, 2), pady=8)
 
+        self.llm_model_var = ctk.StringVar(value="qwen2.5:32b")
+        self.model_dropdown = ctk.CTkOptionMenu(
+            self.options_frame, 
+            values=["qwen2.5:32b", "qwen2.5:14b", "llama3:8b", "mistral:7b"],
+            variable=self.llm_model_var,
+            width=130
+        )
+        self.model_dropdown.pack(side="left", padx=2, pady=8)
+
+        # Resume Checkbox
         self.resume_var = ctk.BooleanVar(value=True)
         self.resume_checkbox = ctk.CTkCheckBox(
             self.options_frame, 
@@ -105,14 +115,64 @@ class AutoCutStudioApp(ctk.CTk):
         )
         self.resume_checkbox.pack(side="right", padx=10, pady=8)
 
-        # 3. CATEGORIZED AI CLIP MINING FOCUS TAGS (Clean & Streamlined)
+        # 3. LLM MODEL PRO/CON & PERFORMANCE INSPECTOR
+        self.inspector_frame = ctk.CTkFrame(self)
+        self.inspector_frame.pack(fill="x", padx=20, pady=4)
+
+        self.inspector_title = ctk.CTkLabel(self.inspector_frame, text="🧠 Local LLM Performance Inspector & Pros/Cons Guide (Click a model button below)", font=("Arial", 11, "bold"))
+        self.inspector_title.pack(anchor="w", padx=10, pady=(6, 2))
+
+        # Model specification dictionary with descriptions, pros, and cons
+        self.model_specs = {
+            "qwen2.5:32b": {
+                "desc": "Elite heavyweight local reasoning model. Excellent nuance detection for long transcripts.",
+                "pros": "Unmatched context comprehension, highly detailed clip justification reasoning.",
+                "cons": "Higher VRAM usage (~20GB+), slower token generation speed."
+            },
+            "qwen2.5:14b": {
+                "desc": "Balanced sweet-spot model offering near-32B quality at nearly double the speed.",
+                "pros": "Great balance of reasoning and speed, lighter VRAM footprint (~10-12GB).",
+                "cons": "Slightly less creative narrative structuring on complex transcripts."
+            },
+            "llama3:8b": {
+                "desc": "Blazing fast lightweight workhorse. Perfect for rapid iterative highlight testing.",
+                "pros": "Instantaneous inference speed, very low VRAM requirements (~6GB).",
+                "cons": "Can occasionally miss subtle context cues or truncate complex multi-step instructions."
+            },
+            "mistral:7b": {
+                "desc": "Agile instruction-following model optimized for structured outputs and short-form formatting.",
+                "pros": "Extremely reliable timestamp formatting, fast response times.",
+                "cons": "Narrower context window tolerance on very long raw transcripts."
+            }
+        }
+
+        self.model_buttons_container = ctk.CTkFrame(self.inspector_frame, fg_color="transparent")
+        self.model_buttons_container.pack(fill="x", padx=8, pady=(0, 4))
+
+        for model_name in self.model_specs.keys():
+            btn = ctk.CTkButton(
+                self.model_buttons_container,
+                text=model_name,
+                width=110,
+                height=26,
+                font=("Arial", 10, "bold"),
+                fg_color="#34495e",
+                hover_color="#2c3e50",
+                command=lambda m=model_name: self.show_model_inspector(m)
+            )
+            btn.pack(side="left", padx=4, pady=2)
+
+        self.model_info_var = ctk.StringVar(value="Click any model button above to inspect its hardware footprint, pros, and cons.")
+        self.model_info_label = ctk.CTkLabel(self.inspector_frame, textvariable=self.model_info_var, font=("Arial", 10, "italic"), text_color="#3498db", wraplength=920, justify="left")
+        self.model_info_label.pack(anchor="w", padx=12, pady=(0, 6))
+
+        # 4. CATEGORIZED AI CLIP MINING FOCUS TAGS
         self.tags_main_frame = ctk.CTkFrame(self)
         self.tags_main_frame.pack(fill="x", padx=20, pady=4)
 
-        self.tags_title = ctk.CTkLabel(self.tags_main_frame, text="AI Clip Mining Focus Categories & Hobbies", font=("Arial", 11, "bold"))
+        self.tags_title = ctk.CTkLabel(self.tags_main_frame, text="AI Clip Mining Focus Categories & Hobbies (Checked items inject definitions into the prompt below)", font=("Arial", 11, "bold"))
         self.tags_title.pack(anchor="w", padx=12, pady=(6, 2))
 
-        # Mapping items with detailed definitions that automatically feed into prompt context
         self.hobby_definitions = {
             "Gaming / PC": "High-kill streaks, jump scares, clutch gameplay moments, and loud audio reactions.",
             "VR Horror & Action": "Panic reactions, sudden visual jumps, spooky audio cues, and frantic head movements.",
@@ -161,28 +221,28 @@ class AutoCutStudioApp(ctk.CTk):
                 cat_col = 0
                 cat_row += 1
 
-        # 4. CUSTOM AI PROMPT & DIRECTIVES INPUT (Smart Dynamic Integration)
+        # 5. CUSTOM AI PROMPT & DIRECTIVES INPUT
         self.prompt_frame = ctk.CTkFrame(self)
         self.prompt_frame.pack(fill="x", padx=20, pady=4)
 
-        self.prompt_label = ctk.CTkLabel(self.prompt_frame, text="Custom AI Clip-Mining Prompt Template (Injects checked tags automatically):", font=("Arial", 11, "bold"))
+        self.prompt_label = ctk.CTkLabel(self.prompt_frame, text="Custom AI Clip-Mining Prompt Template ( {criteria_details} dynamically inserts checked options ):", font=("Arial", 11, "bold"))
         self.prompt_label.pack(anchor="w", padx=10, pady=(6, 2))
 
         default_prompt_template = (
             "You are an expert video editor and clip miner. Review the transcript below and extract the top 3-5 punchiest highlight clips "
             "optimized for {framing}.\n\n"
-            "Active Focus Categories & Specific Criteria:\n{criteria_details}\n\n"
+            "ACTIVE CHECKED OPTIONS & CRITERIA TO TARGET:\n{criteria_details}\n\n"
             "Strict Directives:\n"
-            "1. Match the transcript timestamps to moments fitting the criteria above.\n"
+            "1. Match the transcript timestamps exclusively to moments fitting the criteria above.\n"
             "2. Provide exact start and end timestamps (MM:SS to MM:SS) with precise durations.\n"
-            "3. Write a 1-sentence justification explaining why this specific segment will perform well for short-form or edited reels."
+            "3. Write a 1-sentence justification explaining why this specific segment matches your criteria."
         )
 
-        self.prompt_textbox = ctk.CTkTextbox(self.prompt_frame, height=95, font=("Consolas", 10))
+        self.prompt_textbox = ctk.CTkTextbox(self.prompt_frame, height=90, font=("Consolas", 10))
         self.prompt_textbox.pack(fill="x", padx=10, pady=(0, 6))
         self.prompt_textbox.insert("1.0", default_prompt_template)
 
-        # 5. ACTION BUTTONS (Start & Abort)
+        # 6. ACTION BUTTONS (Start & Abort)
         self.btn_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.btn_frame.pack(fill="x", padx=20, pady=(4, 4))
 
@@ -200,8 +260,8 @@ class AutoCutStudioApp(ctk.CTk):
         self.status_label = ctk.CTkLabel(self, text="Status: Ready. Please select a video file to begin.", font=("Arial", 11, "bold"))
         self.status_label.pack(anchor="w", padx=20, pady=(0, 4))
 
-        # 6. TABS FOR LOGS VS. DETECTED AI TIMELINE CLIPS
-        self.tabview = ctk.CTkTabview(self, height=190)
+        # 7. TABS FOR LOGS VS. DETECTED AI TIMELINE CLIPS
+        self.tabview = ctk.CTkTabview(self, height=180)
         self.tabview.pack(fill="both", expand=True, padx=20, pady=(0, 10))
         
         self.tab_logs = self.tabview.add("Activity Log")
@@ -219,6 +279,18 @@ class AutoCutStudioApp(ctk.CTk):
         self.clips_textbox.configure(state="disabled")
 
         self.log_verbose("SYSTEM", "Application initialized. Waiting for video file selection.")
+
+    def show_model_inspector(self, model_name):
+        """Displays pros, cons, and performance stats when clicking a model button."""
+        info = self.model_specs.get(model_name, {})
+        text = (
+            f"[{model_name}] Performance Profile:\n"
+            f"• Description: {info.get('desc', '')}\n"
+            f"• ✅ Pros: {info.get('pros', '')}\n"
+            f"• ❌ Cons: {info.get('cons', '')}"
+        )
+        self.model_info_var.set(text)
+        self.llm_model_var.set(model_name)  # Automatically selects it in the dropdown too!
 
     def browse_file(self):
         filename = filedialog.askopenfilename(
@@ -317,8 +389,9 @@ class AutoCutStudioApp(ctk.CTk):
         base_name = os.path.splitext(file_path)[0]
         selected_format = self.output_format_var.get()
         selected_framing = self.framing_mode_var.get()
+        selected_model = self.llm_model_var.get()
         
-        # Build active criteria details dynamically from checked boxes
+        # Dynamically aggregate active criteria from checked boxes
         active_criteria = []
         active_hobby_names = []
         for hobby, var in self.hobby_vars.items():
@@ -338,7 +411,7 @@ class AutoCutStudioApp(ctk.CTk):
         try:
             self.update_status("Initializing pipeline...", 0.0)
             self.log_verbose("SYSTEM", f"Target file: {os.path.basename(file_path)}")
-            self.log_verbose("SYSTEM", f"Format: .{selected_format.upper()} | Framing: {selected_framing}")
+            self.log_verbose("SYSTEM", f"Format: .{selected_format.upper()} | Framing: {selected_framing} | Model: {selected_model}")
             self.log_verbose("SYSTEM", f"Active Focus Tags: [{hobbies_str}]")
             self.log_verbose("SYSTEM", f"Resume Mode: {'ENABLED' if is_resume_enabled else 'DISABLED'}")
 
@@ -389,8 +462,8 @@ class AutoCutStudioApp(ctk.CTk):
                 return
 
             # --- STEP 2: OLLAMA LLM ANALYSIS ---
-            self.update_status("Analyzing highlights (Ollama GPU)...", 0.6)
-            self.log_verbose("OLLAMA", f"Connecting to local Ollama instance (qwen2.5:32b on CUDA) with dynamic prompt criteria...")
+            self.update_status(f"Analyzing highlights ({selected_model} on Ollama GPU)...", 0.6)
+            self.log_verbose("OLLAMA", f"Connecting to local Ollama instance ({selected_model} on CUDA) with injected prompt criteria...")
             
             if self.cancel_requested.is_set():
                 return
@@ -413,7 +486,7 @@ class AutoCutStudioApp(ctk.CTk):
             full_ai_prompt = f"{formatted_prompt}\n\nTranscript:\n{transcript_text}"
 
             req_data = json.dumps({
-                "model": "qwen2.5:32b",
+                "model": selected_model,
                 "prompt": full_ai_prompt,
                 "stream": False
             }).encode("utf-8")
@@ -433,7 +506,7 @@ class AutoCutStudioApp(ctk.CTk):
 
             display_output = (
                 f"=== OLLAMA AI CLIP MINING ANALYSIS ===\n"
-                f"Model: qwen2.5:32b | Framing: {selected_framing}\n"
+                f"Model: {selected_model} | Framing: {selected_framing}\n"
                 f"Focus Categories: [{hobbies_str}]\n\n"
                 f"{ai_response_text}"
             )
