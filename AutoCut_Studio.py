@@ -31,8 +31,8 @@ class AutoCutStudioApp(ctk.CTk):
         super().__init__()
 
         self.title("Universal Local AI Video Clip Studio — RTX Accelerated Pipeline")
-        self.geometry("960x1040")
-        self.minsize(800, 780)
+        self.geometry("980x1020")
+        self.minsize(820, 780)
 
         # Threading & Cancellation Control
         self.active_worker_thread = None
@@ -47,8 +47,8 @@ class AutoCutStudioApp(ctk.CTk):
         self.title_label = ctk.CTkLabel(self, text="Universal Local AI Video Clip Studio (Insta360 & More)", font=("Arial", 16, "bold"))
         self.title_label.pack(pady=(12, 2))
 
-        self.rtx_badge = ctk.CTkLabel(self, text="⚡ Powered by CUDA / RTX Hardware Acceleration", font=("Arial", 11, "italic"), text_color="#2ecc71")
-        self.rtx_badge.pack(pady=(0, 8))
+        self.rtx_badge = ctk.CTkLabel(self, text="⚡ Powered by CUDA / RTX Hardware Acceleration (Hybrid CPU/GPU Pipeline)", font=("Arial", 11, "italic"), text_color="#2ecc71")
+        self.rtx_badge.pack(pady=(0, 6))
 
         # 1. FILE SELECTION FRAME
         self.file_frame = ctk.CTkFrame(self)
@@ -105,12 +105,29 @@ class AutoCutStudioApp(ctk.CTk):
         )
         self.resume_checkbox.pack(side="right", padx=10, pady=8)
 
-        # 3. CATEGORIZED AI CLIP MINING FOCUS TAGS
+        # 3. CATEGORIZED AI CLIP MINING FOCUS TAGS (Clean & Streamlined)
         self.tags_main_frame = ctk.CTkFrame(self)
         self.tags_main_frame.pack(fill="x", padx=20, pady=4)
 
         self.tags_title = ctk.CTkLabel(self.tags_main_frame, text="AI Clip Mining Focus Categories & Hobbies", font=("Arial", 11, "bold"))
         self.tags_title.pack(anchor="w", padx=12, pady=(6, 2))
+
+        # Mapping items with detailed definitions that automatically feed into prompt context
+        self.hobby_definitions = {
+            "Gaming / PC": "High-kill streaks, jump scares, clutch gameplay moments, and loud audio reactions.",
+            "VR Horror & Action": "Panic reactions, sudden visual jumps, spooky audio cues, and frantic head movements.",
+            "Multiplayer & Streams": "Chat interaction highlights, witty banter, and community event rewards.",
+            "Snowboarding": "Big air jumps, powder carving, steep descents, and trick landings.",
+            "One-Wheeling": "Carving lines, high-speed straightaways, balance recoveries, and scenic cruising.",
+            "Skating / Boarding": "Street/park trick setups, rail slides, stair drops, and clean roll-aways.",
+            "Cycling & Trails": "Technical singletrack climbs, fast descents, hairpin turns, and near misses.",
+            "Camping": "Campsite setup reels, campfire stories, morning views, and wilderness ambiance.",
+            "Boating & Water": "Wakeboarding cuts, smooth river runs, sunset cruises, and splashing anchor moments.",
+            "Hiking & Nature": "Summit reveals, panoramic lookouts, wildlife encounters, and trail milestones.",
+            "Cycling / Commute": "City traffic weaving, scenic bike paths, and urban exploration footage.",
+            "Dog Training & Pets": "Cute puppy tricks, command execution ('Heal', 'Sit'), playful zoomies, and scenic walks.",
+            "Casual Vlogging / Talk": "Engaging opening hooks, monologue punchlines, and storytelling transitions."
+        }
 
         self.hobby_categories = {
             "🎮 Gaming & VR": ["Gaming / PC", "VR Horror & Action", "Multiplayer & Streams"],
@@ -144,25 +161,25 @@ class AutoCutStudioApp(ctk.CTk):
                 cat_col = 0
                 cat_row += 1
 
-        # 4. CUSTOM AI PROMPT & DIRECTIVES INPUT (User Creative Input)
+        # 4. CUSTOM AI PROMPT & DIRECTIVES INPUT (Smart Dynamic Integration)
         self.prompt_frame = ctk.CTkFrame(self)
         self.prompt_frame.pack(fill="x", padx=20, pady=4)
 
-        self.prompt_label = ctk.CTkLabel(self.prompt_frame, text="Custom AI Clip-Mining Instructions & Directives (Prompt Template):", font=("Arial", 11, "bold"))
+        self.prompt_label = ctk.CTkLabel(self.prompt_frame, text="Custom AI Clip-Mining Prompt Template (Injects checked tags automatically):", font=("Arial", 11, "bold"))
         self.prompt_label.pack(anchor="w", padx=10, pady=(6, 2))
 
-        # Default expert prompt example pre-loaded for user customization
         default_prompt_template = (
-            "You are an elite video editor and content creator. Review the transcript below and extract the top 3-5 punchiest highlight clips "
-            "optimized for {framing}. Focus specifically on moments matching our active focus tags: [{hobbies}].\n\n"
+            "You are an expert video editor and clip miner. Review the transcript below and extract the top 3-5 punchiest highlight clips "
+            "optimized for {framing}.\n\n"
+            "Active Focus Categories & Specific Criteria:\n{criteria_details}\n\n"
             "Strict Directives:\n"
-            "1. Identify high-energy action beats, funny reactions, unexpected dialogue hooks, or climax moments.\n"
+            "1. Match the transcript timestamps to moments fitting the criteria above.\n"
             "2. Provide exact start and end timestamps (MM:SS to MM:SS) with precise durations.\n"
             "3. Write a 1-sentence justification explaining why this specific segment will perform well for short-form or edited reels."
         )
 
-        self.prompt_textbox = ctk.CTkTextbox(self.prompt_frame, height=90, font=("Consolas", 10))
-        self.prompt_textbox.pack(fill="x", padx=10, pady=(0, 8))
+        self.prompt_textbox = ctk.CTkTextbox(self.prompt_frame, height=95, font=("Consolas", 10))
+        self.prompt_textbox.pack(fill="x", padx=10, pady=(0, 6))
         self.prompt_textbox.insert("1.0", default_prompt_template)
 
         # 5. ACTION BUTTONS (Start & Abort)
@@ -184,7 +201,7 @@ class AutoCutStudioApp(ctk.CTk):
         self.status_label.pack(anchor="w", padx=20, pady=(0, 4))
 
         # 6. TABS FOR LOGS VS. DETECTED AI TIMELINE CLIPS
-        self.tabview = ctk.CTkTabview(self, height=220)
+        self.tabview = ctk.CTkTabview(self, height=190)
         self.tabview.pack(fill="both", expand=True, padx=20, pady=(0, 10))
         
         self.tab_logs = self.tabview.add("Activity Log")
@@ -204,7 +221,6 @@ class AutoCutStudioApp(ctk.CTk):
         self.log_verbose("SYSTEM", "Application initialized. Waiting for video file selection.")
 
     def browse_file(self):
-        """Opens file dialog to select any target video file and auto-detects parameters."""
         filename = filedialog.askopenfilename(
             title="Select Video File",
             filetypes=[("Video Files", "*.insv *.mp4 *.mov *.mkv"), ("All Files", "*.*")]
@@ -215,7 +231,6 @@ class AutoCutStudioApp(ctk.CTk):
             self.log_verbose("SYSTEM", f"Target file selected: {filename}")
 
     def auto_detect_settings(self):
-        """Smartly detects output formatting and framing based on file naming or path clues."""
         path = self.file_path_var.get().lower()
         if not path:
             return
@@ -240,7 +255,6 @@ class AutoCutStudioApp(ctk.CTk):
         self.log_verbose("SYSTEM", f"Auto-detected -> Format: .{detected_fmt.lower()} | Framing: {detected_frame}")
 
     def log_verbose(self, step_name, details):
-        """Logs detailed progress safely to the GUI textbox and console."""
         timestamp = time.strftime("[%H:%M:%S]")
         message = f"{timestamp} [{step_name}] {details}"
         print(message)
@@ -254,7 +268,6 @@ class AutoCutStudioApp(ctk.CTk):
             pass
 
     def update_clips_display(self, clip_data_text):
-        """Populates the AI Detected Clips tab with timestamp blocks."""
         try:
             self.clips_textbox.configure(state="normal")
             self.clips_textbox.delete("1.0", "end")
@@ -264,7 +277,6 @@ class AutoCutStudioApp(ctk.CTk):
             pass
 
     def update_status(self, text, progress_value=None):
-        """Updates status text and optional progress bar value (0.0 to 1.0)."""
         try:
             self.status_label.configure(text=f"Status: {text}")
             if progress_value is not None:
@@ -273,7 +285,6 @@ class AutoCutStudioApp(ctk.CTk):
             pass
 
     def start_pipeline_thread(self):
-        """Spawns a background thread to prevent GUI freezing."""
         target_file_path = self.file_path_var.get().strip()
         if not target_file_path or not os.path.exists(target_file_path):
             self.log_verbose("ERROR", f"Target file does not exist or none selected: {target_file_path}")
@@ -292,12 +303,10 @@ class AutoCutStudioApp(ctk.CTk):
         self.active_worker_thread.start()
 
     def abort_pipeline(self):
-        """Triggers cancellation flag to stop tasks safely."""
         self.log_verbose("SYSTEM", "Abort requested by user. Stopping background tasks...")
         self.cancel_requested.set()
 
     def format_time_srt(self, seconds):
-        """Converts float seconds to SRT timestamp format (HH:MM:SS,ms)."""
         hours = int(seconds // 3600)
         minutes = int((seconds % 3600) // 60)
         secs = int(seconds % 60)
@@ -305,13 +314,21 @@ class AutoCutStudioApp(ctk.CTk):
         return f"{hours:02d}:{minutes:02d}:{secs:02d},{milliseconds:03d}"
 
     def run_pipeline_logic(self, file_path):
-        """Core pipeline logic running real faster-whisper CUDA transcription and Ollama inference."""
         base_name = os.path.splitext(file_path)[0]
         selected_format = self.output_format_var.get()
         selected_framing = self.framing_mode_var.get()
         
-        active_hobbies = [hobby for hobby, var in self.hobby_vars.items() if var.get()]
-        hobbies_str = ", ".join(active_hobbies) if active_hobbies else "General Content"
+        # Build active criteria details dynamically from checked boxes
+        active_criteria = []
+        active_hobby_names = []
+        for hobby, var in self.hobby_vars.items():
+            if var.get():
+                active_hobby_names.append(hobby)
+                desc = self.hobby_definitions.get(hobby, "General highlight moments.")
+                active_criteria.append(f"- {hobby}: {desc}")
+
+        criteria_str = "\n".join(active_criteria) if active_criteria else "- General Content: Punchy dialogue, engaging pacing, and overall video highlights."
+        hobbies_str = ", ".join(active_hobby_names) if active_hobby_names else "General Content"
         
         srt_output = f"{base_name}.srt"
         final_output = f"{base_name}.{selected_format}"
@@ -329,7 +346,7 @@ class AutoCutStudioApp(ctk.CTk):
                 self.log_verbose("SYSTEM", "Pipeline cancelled.")
                 return
 
-            # --- STEP 1: FASTER-WHISPER CUDA TRANSCRIPTION ---
+            # --- STEP 1: FASTER-WHISPER HYBRID CPU/GPU ACCELERATED TRANSCRIPTION ---
             skip_whisper = False
             if is_resume_enabled and os.path.exists(srt_output):
                 skip_whisper = True
@@ -337,16 +354,22 @@ class AutoCutStudioApp(ctk.CTk):
                 self.update_status("Skipped transcription (cached)...", 0.4)
             
             if not skip_whisper:
-                self.update_status("Transcribing audio (Faster-Whisper CUDA)...", 0.2)
-                self.log_verbose("WHISPER", "Initializing large-v3 model on RTX CUDA device (float16)...")
+                self.update_status("Transcribing audio (RTX CUDA + CPU Hybrid Acceleration)...", 0.2)
+                self.log_verbose("WHISPER", "Initializing large-v3 model on CUDA (float16) with optimized CPU thread pooling...")
                 
-                model = WhisperModel("large-v3", device="cuda", compute_type="float16")
+                model = WhisperModel(
+                    "large-v3", 
+                    device="cuda", 
+                    compute_type="float16", 
+                    cpu_threads=4, 
+                    num_workers=2
+                )
                 
                 if self.cancel_requested.is_set():
                     return
 
-                self.update_status("Processing audio chunks on GPU...", 0.35)
-                self.log_verbose("WHISPER", "Running high-speed tensor inference across audio streams...")
+                self.update_status("Processing audio streams on GPU/CPU pipeline...", 0.35)
+                self.log_verbose("WHISPER", "Running high-speed tensor inference...")
                 
                 segments, info = model.transcribe(file_path, beam_size=5)
                 
@@ -367,7 +390,7 @@ class AutoCutStudioApp(ctk.CTk):
 
             # --- STEP 2: OLLAMA LLM ANALYSIS ---
             self.update_status("Analyzing highlights (Ollama GPU)...", 0.6)
-            self.log_verbose("OLLAMA", f"Connecting to local Ollama instance (qwen2.5:32b on CUDA) with custom user prompt...")
+            self.log_verbose("OLLAMA", f"Connecting to local Ollama instance (qwen2.5:32b on CUDA) with dynamic prompt criteria...")
             
             if self.cancel_requested.is_set():
                 return
@@ -377,16 +400,15 @@ class AutoCutStudioApp(ctk.CTk):
                 with open(srt_output, "r", encoding="utf-8") as f:
                     transcript_text = f.read()
 
-            # Retrieve user custom prompt template from textbox and dynamically format it
             raw_user_prompt_template = self.prompt_textbox.get("1.0", "end").strip()
             
             try:
                 formatted_prompt = raw_user_prompt_template.format(
                     framing=selected_framing,
-                    hobbies=hobbies_str
+                    criteria_details=criteria_str
                 )
             except Exception:
-                formatted_prompt = raw_user_prompt_template  # Fallback if user removed formatting keys
+                formatted_prompt = raw_user_prompt_template
 
             full_ai_prompt = f"{formatted_prompt}\n\nTranscript:\n{transcript_text}"
 
@@ -403,7 +425,6 @@ class AutoCutStudioApp(ctk.CTk):
             )
 
             try:
-                # 10-minute timeout for 32B model inference
                 with urllib.request.urlopen(req, timeout=600) as response:
                     res_body = json.loads(response.read().decode("utf-8"))
                     ai_response_text = res_body.get("response", "No response generated.")
@@ -440,7 +461,6 @@ class AutoCutStudioApp(ctk.CTk):
                 pass
 
     def on_closing(self):
-        """Gracefully signals background threads to stop and exits the app cleanly."""
         self.log_verbose("SYSTEM", "Shutdown requested. Signaling background tasks to stop...")
         self.cancel_requested.set()
         
