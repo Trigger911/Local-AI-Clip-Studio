@@ -30,9 +30,9 @@ class AutoCutStudioApp(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("Local AI Video Clip Studio — RTX Accelerated Pipeline")
-        self.geometry("920x980")
-        self.minsize(760, 750)
+        self.title("Universal Local AI Video Clip Studio — RTX Accelerated Pipeline")
+        self.geometry("960x1040")
+        self.minsize(800, 780)
 
         # Threading & Cancellation Control
         self.active_worker_thread = None
@@ -45,26 +45,26 @@ class AutoCutStudioApp(ctk.CTk):
         
         # Title Label
         self.title_label = ctk.CTkLabel(self, text="Universal Local AI Video Clip Studio (Insta360 & More)", font=("Arial", 16, "bold"))
-        self.title_label.pack(pady=(15, 2))
+        self.title_label.pack(pady=(12, 2))
 
         self.rtx_badge = ctk.CTkLabel(self, text="⚡ Powered by CUDA / RTX Hardware Acceleration", font=("Arial", 11, "italic"), text_color="#2ecc71")
-        self.rtx_badge.pack(pady=(0, 10))
+        self.rtx_badge.pack(pady=(0, 8))
 
-        # 1. FILE SELECTION FRAME (Interactive File Picker - Starts Clean)
+        # 1. FILE SELECTION FRAME
         self.file_frame = ctk.CTkFrame(self)
-        self.file_frame.pack(fill="x", padx=20, pady=5)
+        self.file_frame.pack(fill="x", padx=20, pady=4)
         
         self.file_path_var = ctk.StringVar(value="")
         
         self.file_entry = ctk.CTkEntry(self.file_frame, textvariable=self.file_path_var, placeholder_text="Select or drop a video file (.mp4, .mov, .mkv, .insv)...", font=("Arial", 11))
-        self.file_entry.pack(side="left", fill="x", expand=True, padx=(10, 5), pady=10)
+        self.file_entry.pack(side="left", fill="x", expand=True, padx=(10, 5), pady=8)
 
         self.browse_button = ctk.CTkButton(self.file_frame, text="Browse...", width=90, command=self.browse_file)
-        self.browse_button.pack(side="right", padx=(0, 10), pady=10)
+        self.browse_button.pack(side="right", padx=(0, 10), pady=8)
 
         # 2. OPTIONS & FORMAT SELECTION FRAME
         self.options_frame = ctk.CTkFrame(self)
-        self.options_frame.pack(fill="x", padx=20, pady=5)
+        self.options_frame.pack(fill="x", padx=20, pady=4)
 
         # Output format dropdown
         self.format_label = ctk.CTkLabel(self.options_frame, text="Format:", font=("Arial", 11, "bold"))
@@ -88,7 +88,7 @@ class AutoCutStudioApp(ctk.CTk):
             self.options_frame, 
             values=["Vertical (9:16 Shorts/TikTok)", "Full 360° Source", "Standard 16:9 Landscape"],
             variable=self.framing_mode_var,
-            width=210
+            width=200
         )
         self.framing_dropdown.pack(side="left", padx=3, pady=8)
 
@@ -107,12 +107,11 @@ class AutoCutStudioApp(ctk.CTk):
 
         # 3. CATEGORIZED AI CLIP MINING FOCUS TAGS
         self.tags_main_frame = ctk.CTkFrame(self)
-        self.tags_main_frame.pack(fill="x", padx=20, pady=5)
+        self.tags_main_frame.pack(fill="x", padx=20, pady=4)
 
-        self.tags_title = ctk.CTkLabel(self.tags_main_frame, text="AI Clip Mining Focus Categories & Hobbies", font=("Arial", 12, "bold"))
-        self.tags_title.pack(anchor="w", padx=12, pady=(8, 4))
+        self.tags_title = ctk.CTkLabel(self.tags_main_frame, text="AI Clip Mining Focus Categories & Hobbies", font=("Arial", 11, "bold"))
+        self.tags_title.pack(anchor="w", padx=12, pady=(6, 2))
 
-        # Categories mapping with grouped tags
         self.hobby_categories = {
             "🎮 Gaming & VR": ["Gaming / PC", "VR Horror & Action", "Multiplayer & Streams"],
             "🏂 Action & Extreme": ["Snowboarding", "One-Wheeling", "Skating / Boarding", "Cycling & Trails"],
@@ -121,65 +120,84 @@ class AutoCutStudioApp(ctk.CTk):
         }
 
         self.hobby_vars = {}
-        
-        # Container for category columns/grid
         self.categories_grid = ctk.CTkFrame(self.tags_main_frame, fg_color="transparent")
-        self.categories_grid.pack(fill="x", padx=8, pady=(0, 8))
+        self.categories_grid.pack(fill="x", padx=8, pady=(0, 6))
         self.categories_grid.grid_columnconfigure((0, 1), weight=1)
 
         cat_col = 0
         cat_row = 0
         for category_name, items in self.hobby_categories.items():
             cat_frame = ctk.CTkFrame(self.categories_grid, fg_color="#1e1e1e" if ctk.get_appearance_mode()=="Dark" else "#e6e6e6")
-            cat_frame.grid(row=cat_row, column=cat_col, sticky="nsew", padx=6, pady=6)
+            cat_frame.grid(row=cat_row, column=cat_col, sticky="nsew", padx=4, pady=4)
             
-            cat_label = ctk.CTkLabel(cat_frame, text=category_name, font=("Arial", 11, "bold"))
-            cat_label.pack(anchor="w", padx=8, pady=(6, 2))
+            cat_label = ctk.CTkLabel(cat_frame, text=category_name, font=("Arial", 10, "bold"))
+            cat_label.pack(anchor="w", padx=6, pady=(4, 2))
 
             for item in items:
                 var = ctk.BooleanVar(value=False)
                 self.hobby_vars[item] = var
                 cb = ctk.CTkCheckBox(cat_frame, text=item, variable=var, font=("Arial", 10))
-                cb.pack(anchor="w", padx=12, pady=2)
+                cb.pack(anchor="w", padx=8, pady=1)
 
             cat_col += 1
             if cat_col > 1:
                 cat_col = 0
                 cat_row += 1
 
-        # 4. ACTION BUTTONS (Start & Abort)
-        self.btn_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.btn_frame.pack(fill="x", padx=20, pady=(5, 5))
+        # 4. CUSTOM AI PROMPT & DIRECTIVES INPUT (User Creative Input)
+        self.prompt_frame = ctk.CTkFrame(self)
+        self.prompt_frame.pack(fill="x", padx=20, pady=4)
 
-        self.start_button = ctk.CTkButton(self.btn_frame, text="Start RTX Pipeline", command=self.start_pipeline_thread, height=38, fg_color="#1f6aa5")
+        self.prompt_label = ctk.CTkLabel(self.prompt_frame, text="Custom AI Clip-Mining Instructions & Directives (Prompt Template):", font=("Arial", 11, "bold"))
+        self.prompt_label.pack(anchor="w", padx=10, pady=(6, 2))
+
+        # Default expert prompt example pre-loaded for user customization
+        default_prompt_template = (
+            "You are an elite video editor and content creator. Review the transcript below and extract the top 3-5 punchiest highlight clips "
+            "optimized for {framing}. Focus specifically on moments matching our active focus tags: [{hobbies}].\n\n"
+            "Strict Directives:\n"
+            "1. Identify high-energy action beats, funny reactions, unexpected dialogue hooks, or climax moments.\n"
+            "2. Provide exact start and end timestamps (MM:SS to MM:SS) with precise durations.\n"
+            "3. Write a 1-sentence justification explaining why this specific segment will perform well for short-form or edited reels."
+        )
+
+        self.prompt_textbox = ctk.CTkTextbox(self.prompt_frame, height=90, font=("Consolas", 10))
+        self.prompt_textbox.pack(fill="x", padx=10, pady=(0, 8))
+        self.prompt_textbox.insert("1.0", default_prompt_template)
+
+        # 5. ACTION BUTTONS (Start & Abort)
+        self.btn_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.btn_frame.pack(fill="x", padx=20, pady=(4, 4))
+
+        self.start_button = ctk.CTkButton(self.btn_frame, text="Start RTX Pipeline", command=self.start_pipeline_thread, height=36, fg_color="#1f6aa5")
         self.start_button.pack(side="left", fill="x", expand=True, padx=(0, 5))
 
-        self.abort_button = ctk.CTkButton(self.btn_frame, text="Stop / Abort", command=self.abort_pipeline, height=38, fg_color="#c0392b", hover_color="#e74c3c", state="disabled")
+        self.abort_button = ctk.CTkButton(self.btn_frame, text="Stop / Abort", command=self.abort_pipeline, height=36, fg_color="#c0392b", hover_color="#e74c3c", state="disabled")
         self.abort_button.pack(side="right", fill="x", expand=True, padx=(5, 0))
 
         # Progress Bar & Status
         self.progress_bar = ctk.CTkProgressBar(self, orientation="horizontal")
-        self.progress_bar.pack(fill="x", padx=20, pady=(8, 2))
+        self.progress_bar.pack(fill="x", padx=20, pady=(6, 2))
         self.progress_bar.set(0.0)
 
-        self.status_label = ctk.CTkLabel(self, text="Status: Ready. Please select a video file to begin.", font=("Arial", 12, "bold"))
-        self.status_label.pack(anchor="w", padx=20, pady=(0, 5))
+        self.status_label = ctk.CTkLabel(self, text="Status: Ready. Please select a video file to begin.", font=("Arial", 11, "bold"))
+        self.status_label.pack(anchor="w", padx=20, pady=(0, 4))
 
-        # 5. TABS FOR LOGS VS. DETECTED AI TIMELINE CLIPS
-        self.tabview = ctk.CTkTabview(self)
-        self.tabview.pack(fill="both", expand=True, padx=20, pady=(0, 15))
+        # 6. TABS FOR LOGS VS. DETECTED AI TIMELINE CLIPS
+        self.tabview = ctk.CTkTabview(self, height=220)
+        self.tabview.pack(fill="both", expand=True, padx=20, pady=(0, 10))
         
         self.tab_logs = self.tabview.add("Activity Log")
         self.tab_clips = self.tabview.add("Detected AI Clips (Timestamps)")
 
         # Activity Log Textbox
         self.log_textbox = ctk.CTkTextbox(self.tab_logs, font=("Consolas", 10))
-        self.log_textbox.pack(fill="both", expand=True, padx=5, pady=5)
+        self.log_textbox.pack(fill="both", expand=True, padx=4, pady=4)
         self.log_textbox.configure(state="disabled")
 
         # Detected Clips Table/Textbox View
         self.clips_textbox = ctk.CTkTextbox(self.tab_clips, font=("Consolas", 11))
-        self.clips_textbox.pack(fill="both", expand=True, padx=5, pady=5)
+        self.clips_textbox.pack(fill="both", expand=True, padx=4, pady=4)
         self.clips_textbox.insert("end", "No clips analyzed yet. Select a video and run the pipeline to view AI timestamps & durations.\n")
         self.clips_textbox.configure(state="disabled")
 
@@ -349,7 +367,7 @@ class AutoCutStudioApp(ctk.CTk):
 
             # --- STEP 2: OLLAMA LLM ANALYSIS ---
             self.update_status("Analyzing highlights (Ollama GPU)...", 0.6)
-            self.log_verbose("OLLAMA", f"Connecting to local Ollama instance (qwen2.5:32b on CUDA) with focus: [{hobbies_str}]...")
+            self.log_verbose("OLLAMA", f"Connecting to local Ollama instance (qwen2.5:32b on CUDA) with custom user prompt...")
             
             if self.cancel_requested.is_set():
                 return
@@ -359,17 +377,22 @@ class AutoCutStudioApp(ctk.CTk):
                 with open(srt_output, "r", encoding="utf-8") as f:
                     transcript_text = f.read()
 
-            prompt = (
-                f"You are an expert video editor and clip miner. Analyze the following video transcript and identify the best "
-                f"highlight clips tailored for {selected_framing}. The user's active focus/activity categories for this session are: [{hobbies_str}]. "
-                f"Look specifically for engaging moments, tricks, commentary, action sequences, or milestones related to these themes. "
-                f"Return exact start/end timestamps, durations, and reasoning for each clip.\n\n"
-                f"Transcript:\n{transcript_text}"
-            )
+            # Retrieve user custom prompt template from textbox and dynamically format it
+            raw_user_prompt_template = self.prompt_textbox.get("1.0", "end").strip()
+            
+            try:
+                formatted_prompt = raw_user_prompt_template.format(
+                    framing=selected_framing,
+                    hobbies=hobbies_str
+                )
+            except Exception:
+                formatted_prompt = raw_user_prompt_template  # Fallback if user removed formatting keys
+
+            full_ai_prompt = f"{formatted_prompt}\n\nTranscript:\n{transcript_text}"
 
             req_data = json.dumps({
                 "model": "qwen2.5:32b",
-                "prompt": prompt,
+                "prompt": full_ai_prompt,
                 "stream": False
             }).encode("utf-8")
 
