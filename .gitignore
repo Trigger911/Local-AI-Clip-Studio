@@ -1,0 +1,18 @@
+# Python cache and build files
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+
+# Local video files, transcripts, and exports
+*.insv
+*.mp4
+*.mov
+*.mkv
+*.srt
+*.fcpxml
+
+# IDE settings
+.vscode/
+.idea/
