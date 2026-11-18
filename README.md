@@ -10,7 +10,7 @@ The application streamlines video editing by chaining together GPU-accelerated l
 
 ### **Pipeline Execution Steps:**
 1. **Intelligent Ingestion & Auto-Detection:** 
-   * Select any high-resolution video file (including Insta360 `.insv` footage or standard MP4/MOV recordings) via the GUI or let the system auto-detect recommended output formats (`.fcpxml` for DaVinci Resolve, `.edl`, `.srt`, `.txt`) and framing presets.
+   * Select any high-resolution video file (including `.insv`, `.mp4`, `.mov`, and `.mkv` recordings) via the GUI or let the system auto-detect recommended output formats (`.fcpxml` for DaVinci Resolve, `.edl`, `.srt`, `.txt`) and framing presets.
 2. **Step 1 — RTX-Accelerated Transcription (`faster-whisper`):** 
    * Offloads audio processing to NVIDIA CUDA cores using OpenAI's `large-v3` model in `float16` precision, generating highly accurate `.srt` transcripts with millisecond-level timestamps.
 3. **Step 2 — Contextual Clip Mining & AI Analysis (Local LLM):** 
